@@ -481,6 +481,24 @@
         }
       }, 1000);
     }
+    const LOG_URL = "https://script.google.com/macros/s/AKfycbz0zDrP3IWink1G908X-GlIsEIcVB4OfzHsdnMNoqrWb9vF-bQFuBAjdo4xweUXzZz5vw/exec"; // <-- paste your Apps Script web app URL here
+
+function autoLogToSheet({ winner, prize }) {
+  // Use URL-encoded so it works reliably inside Google Sites embeds
+  const body = new URLSearchParams({
+    winner: winner || "Unknown",
+    prize: prize || "Unknown",
+    source: "Wheel"
+  });
+
+  // mode:no-cors avoids browser blocking; Apps Script will still receive it
+  fetch(LOG_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body
+  }).catch(() => {});
+}
 
     spinBtn.addEventListener("click", () => {
       if (spinning) return;
@@ -518,6 +536,14 @@
           winner: winnerInput.value.trim() || "(name not set)",
           time: new Date()
         };
+
+        lastResult = {
+  prize,
+  winner: winnerInput.value.trim() || "(name not set)",
+  time: new Date()
+};
+
+autoLogToSheet({ winner: lastResult.winner, prize: lastResult.prize });
 
         resultValue.textContent = prize;
         resultMeta.textContent = `Winner: ${lastResult.winner} • ${lastResult.time.toLocaleString()}`;

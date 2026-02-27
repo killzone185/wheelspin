@@ -484,20 +484,15 @@
     const LOG_URL = "https://script.google.com/macros/s/AKfycbz0zDrP3IWink1G908X-GlIsEIcVB4OfzHsdnMNoqrWb9vF-bQFuBAjdo4xweUXzZz5vw/exec"; // <-- paste your Apps Script web app URL here
 
 function autoLogToSheet({ winner, prize }) {
-  // Use URL-encoded so it works reliably inside Google Sites embeds
-  const body = new URLSearchParams({
+  const params = new URLSearchParams({
     winner: winner || "Unknown",
     prize: prize || "Unknown",
     source: "Wheel"
   });
 
-  // mode:no-cors avoids browser blocking; Apps Script will still receive it
-  fetch(LOG_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body
-  }).catch(() => {});
+  // Beacon request (GET). Much more reliable than fetch in embeds.
+  const img = new Image();
+  img.src = `${LOG_URL}?${params.toString()}`;
 }
 
     spinBtn.addEventListener("click", () => {

@@ -530,24 +530,22 @@ function autoLogToSheet({ winner, prize }) {
       setTimeout(() => {
         spinning = false;
 
-        const prize = prizes[idx];
-          lastResult = {
-          prize,
-          winner: winnerInput.value.trim() || "(name not set)",
-          time: new Date()
-        };
+const prize = prizes[idx];
 
-        autoLogToSheet({ 
-          winner: lastResult.winner, 
-          prize: lastResult.prize 
-        });
+lastResult = {
+  prize,
+  winner: winnerInput.value.trim() || "(name not set)",
+  time: new Date()
+};
 
-        resultValue.textContent = prize;
-        resultMeta.textContent = `Winner: ${lastResult.winner} • ${lastResult.time.toLocaleString()}`;
+autoLogToSheet({ winner: lastResult.winner, prize: lastResult.prize });
 
-        copyBtn.disabled = false;
-        lockSpin(15);
-        showToast("Result set. Copy it and log it.");
+resultValue.textContent = prize;
+resultMeta.textContent = `Winner: ${lastResult.winner} • ${lastResult.time.toLocaleString()}`;
+
+copyBtn.disabled = false;
+lockSpin(15);
+showToast("Result set. Auto-logged to Google Sheet.");
       }, dur + 60);
     });
 

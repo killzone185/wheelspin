@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Prize Wheel</title>
+  <style>
+    :root{
+      --bg1:#0b1020;
+      --bg2:#140a1e;
+      --card: rgba(255,255,255,.06);
+      --border: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.65);
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+      --btn: rgba(255,255,255,.10);
+      --btn2: rgba(255,255,255,.16);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 700px at 20% 10%, rgba(0,217,255,.18), transparent 55%),
+        radial-gradient(1000px 650px at 85% 25%, rgba(255,76,170,.16), transparent 55%),
+        radial-gradient(900px 550px at 50% 90%, rgba(120,255,160,.10), transparent 60%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+    .wrap{
+      width:min(1100px, 100%);
+      display:grid;
+      gap:18px;
+      grid-template-columns: 1.1fr .9fr;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+    }
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+    }
+    header{
+      padding:18px 18px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), transparent);
+    }
+    h1{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.2px;
+    }
+    .sub{
+      margin:6px 0 0;
+      font-size:12px;
+      color: var(--muted);
+      line-height:1.4;
+    }
+    .main{
+      padding:18px;
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:16px;
+      align-items:center;
+    }
+    @media (max-width: 980px){
+      .main{ grid-template-columns: 1fr; }
+    }
+
+    .wheelArea{
+      display:grid;
+      place-items:center;
+      gap:12px;
+    }
+    .wheelWrap{
+      width: 330px;
+      height: 330px;
+      position:relative;
+      display:grid;
+      place-items:center;
+      filter: drop-shadow(0 24px 70px rgba(0,0,0,.45));
+    }
+    canvas{
+      width: 330px;
+      height: 330px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.14);
+      transform: rotate(var(--rot, 0deg));
+      transition: transform var(--dur, 4.6s) cubic-bezier(.12,.86,.2,1);
+    }
+    .pointer{
+      position:absolute;
+      right:-6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;height: 0;
+      border-top: 16px solid transparent;
+      border-bottom: 16px solid transparent;
+      border-left: 28px solid rgba(255,255,255,.92);
+      filter: drop-shadow(0 8px 20px rgba(0,0,0,.45));
+    }
+    .hub{
+      position:absolute;
+      width: 74px;
+      height: 74px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.35), rgba(255,255,255,.10));
+      border: 1px solid rgba(255,255,255,.18);
+      display:grid;
+      place-items:center;
+      font-weight:700;
+      letter-spacing:.3px;
+      box-shadow: inset 0 0 0 8px rgba(0,0,0,.08);
+    }
+
+    .panel{
+      padding:18px;
+      display:grid;
+      gap:12px;
+    }
+
+    .result{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      border-radius: 14px;
+      padding:14px;
+      display:grid;
+      gap:6px;
+    }
+    .result .label{
+      font-size:12px;
+      color: var(--muted);
+    }
+    .result .value{
+      font-size:18px;
+      font-weight:800;
+      letter-spacing:.2px;
+      line-height:1.25;
+      word-break:break-word;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    button{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg, var(--btn2), var(--btn));
+      color: var(--text);
+      padding:12px 14px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight:700;
+      letter-spacing:.2px;
+      transition: transform .08s ease, opacity .2s ease;
+      user-select:none;
+    }
+    button:active{ transform: translateY(1px); }
+    button[disabled]{ opacity:.55; cursor:not-allowed; }
+
+    .small{
+      font-size:12px;
+      color: var(--muted);
+      line-height:1.4;
+    }
+    .list{
+      margin:0;
+      padding:0;
+      list-style:none;
+      display:grid;
+      gap:8px;
+    }
+    .chip{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      font-size:13px;
+    }
+    .badge{
+      font-size:11px;
+      padding:4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.82);
+      background: rgba(255,255,255,.06);
+    }
+    input{
+      width:100%;
+      padding:12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      outline:none;
+    }
+    input::placeholder{ color: rgba(255,255,255,.40); }
+    .divider{
+      height:1px;
+      background: rgba(255,255,255,.10);
+      margin:6px 0;
+    }
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.60);
+      border: 1px solid rgba(255,255,255,.16);
+      color: rgba(255,255,255,.92);
+      padding:10px 12px;
+      border-radius: 12px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.35);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show{
+      opacity:1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="card">
+      <header>
+        <h1>🎡 Community Prize Wheel</h1>
+        <p class="sub">One spin. One result. Log it. Final. (Designed for embedding in Google Sites.)</p>
+      </header>
+
+      <div class="main">
+        <div class="wheelArea">
+          <div class="wheelWrap">
+            <div class="pointer" aria-hidden="true"></div>
+            <canvas id="wheel" width="660" height="660"></canvas>
+            <div class="hub">SPIN</div>
+          </div>
+
+          <div class="row">
+            <button id="spinBtn">Spin Prize</button>
+            <button id="copyBtn" disabled>Copy Result</button>
+          </div>
+          <div class="small" id="lockMsg">Tip: After a spin, the button locks for 15 seconds to prevent spam.</div>
+        </div>
+
+        <div class="panel">
+          <div class="result">
+            <div class="label">Result</div>
+            <div class="value" id="resultValue">—</div>
+            <div class="small" id="resultMeta"></div>
+          </div>
+
+          <div>
+            <div class="label" style="font-size:12px;color:var(--muted);margin:10px 0 8px;">Winner name (optional)</div>
+            <input id="winnerInput" placeholder="Type winner name (for your log)" />
+            <div class="small" style="margin-top:8px;">
+              This wheel only picks the prize. You can copy the result and paste into your Google Sheet log.
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="label" style="font-size:12px;color:var(--muted);">Prize Options</div>
+          <ul class="list" id="prizeList"></ul>
+
+          <div class="small">
+            Want it to auto-log to Google Sheets with one click? Tell me and I’ll give you the Apps Script “Log Result” button setup.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card">
+      <header>
+        <h1>✅ How to use (fast)</h1>
+        <p class="sub">Embed this wheel in your Google Site, embed your public Sheet under it, and log each spin.</p>
+      </header>
+      <div class="panel">
+        <div class="chip"><span>1) Screen share / stream</span><span class="badge">Visibility</span></div>
+        <div class="chip"><span>2) Spin once</span><span class="badge">Final</span></div>
+        <div class="chip"><span>3) Copy result</span><span class="badge">Proof</span></div>
+        <div class="chip"><span>4) Paste into Sheet log</span><span class="badge">Audit trail</span></div>
+
+        <div class="divider"></div>
+
+        <div class="small">
+          Recommended rule to post on your site/Discord:
+          <br><br>
+          <strong>Rule:</strong> First result is final. All spins are logged publicly. No re-spins.
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ----- Prize data (your list) -----
+    const prizes = [
+      "$5,000 IC Cash",
+      "$10,000 IC Cash",
+      "$15,000 IC Cash",
+      "$20,000 IC Cash",
+      "Vehicle (15K value)"
+    ];
+
+    // Optional weights (all equal). If you want weighted odds later, tell me.
+    const weights = prizes.map(() => 1);
+
+    // ----- Render prize list -----
+    const prizeList = document.getElementById("prizeList");
+    prizes.forEach((p) => {
+      const li = document.createElement("li");
+      li.className = "chip";
+      li.innerHTML = `<span>${p}</span><span class="badge">Chance: equal</span>`;
+      prizeList.appendChild(li);
+    });
+
+    // ----- Wheel drawing -----
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    const radius = Math.min(cx, cy) - 18;
+
+    // Nice color palette (auto)
+    const colors = [
+      "rgba(0,217,255,.90)",
+      "rgba(255,76,170,.90)",
+      "rgba(120,255,160,.90)",
+      "rgba(255,210,90,.90)",
+      "rgba(150,120,255,.90)"
+    ];
+
+    function drawWheel(rotationRad = 0) {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      const total = prizes.length;
+      const slice = (Math.PI * 2) / total;
+
+      // outer ring
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius + 8, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255,255,255,.18)";
+      ctx.lineWidth = 10;
+      ctx.stroke();
+
+      for (let i = 0; i < total; i++) {
+        const start = rotationRad + i * slice;
+        const end = start + slice;
+
+        // slice
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, start, end);
+        ctx.closePath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fill();
+
+        // divider
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, start, start);
+        ctx.strokeStyle = "rgba(0,0,0,.22)";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // text
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(start + slice / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "rgba(10,10,12,.90)";
+        ctx.font = "700 22px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        wrapText(prizes[i], radius - 20, 0, 260, 24);
+        ctx.restore();
+      }
+
+      // inner glow
+      const grad = ctx.createRadialGradient(cx, cy, 20, cx, cy, radius);
+      grad.addColorStop(0, "rgba(255,255,255,.22)");
+      grad.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
+    function wrapText(text, x, y, maxWidth, lineHeight){
+      const words = text.split(" ");
+      let line = "";
+      let lines = [];
+
+      for (let n = 0; n < words.length; n++){
+        const test = line + words[n] + " ";
+        const metrics = ctx.measureText(test);
+        if (metrics.width > maxWidth && n > 0){
+          lines.push(line.trim());
+          line = words[n] + " ";
+        } else {
+          line = test;
+        }
+      }
+      lines.push(line.trim());
+
+      // Center the block vertically around y
+      const blockHeight = lines.length * lineHeight;
+      let yy = y - (blockHeight - lineHeight)/2;
+
+      for (const l of lines){
+        ctx.fillText(l, x, yy);
+        yy += lineHeight;
+      }
+    }
+
+    // initial draw
+    drawWheel(0);
+
+    // ----- Spin logic -----
+    const spinBtn = document.getElementById("spinBtn");
+    const copyBtn = document.getElementById("copyBtn");
+    const resultValue = document.getElementById("resultValue");
+    const resultMeta = document.getElementById("resultMeta");
+    const winnerInput = document.getElementById("winnerInput");
+
+    let currentRotationDeg = 0;
+    let spinning = false;
+    let lastResult = null;
+
+    // Choose by weighted probability
+    function pickWeightedIndex(weightsArr){
+      const total = weightsArr.reduce((a,b)=>a+b,0);
+      let r = Math.random() * total;
+      for (let i=0;i<weightsArr.length;i++){
+        r -= weightsArr[i];
+        if (r <= 0) return i;
+      }
+      return weightsArr.length - 1;
+    }
+
+    function showToast(msg){
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(()=>t.classList.remove("show"), 1400);
+    }
+
+    function lockSpin(seconds){
+      spinBtn.disabled = true;
+      const lockMsg = document.getElementById("lockMsg");
+      let remaining = seconds;
+      lockMsg.textContent = `Spin locked for ${remaining}s to prevent re-spin spam.`;
+      const timer = setInterval(()=>{
+        remaining--;
+        if (remaining <= 0){
+          clearInterval(timer);
+          spinBtn.disabled = false;
+          lockMsg.textContent = "Ready. Spin once, then log it in your Google Sheet.";
+        } else {
+          lockMsg.textContent = `Spin locked for ${remaining}s to prevent re-spin spam.`;
+        }
+      }, 1000);
+    }
+
+    spinBtn.addEventListener("click", () => {
+      if (spinning) return;
+
+      spinning = true;
+      copyBtn.disabled = true;
+
+      // Pick a winner slice
+      const idx = pickWeightedIndex(weights);
+
+      // We want the pointer on the right side. Our pointer is at 0 degrees (to the right).
+      // Canvas "0 rad" points to the right, increasing clockwise (because of CSS rotate).
+      // Each slice center angle:
+      const sliceDeg = 360 / prizes.length;
+      const sliceCenterDeg = idx * sliceDeg + sliceDeg/2;
+
+      // We will rotate so that sliceCenter aligns with 0deg (pointer).
+      // Add multiple spins for drama.
+      const extraSpins = 6 + Math.floor(Math.random() * 4); // 6–9 full spins
+      const targetRotation = extraSpins * 360 + (360 - sliceCenterDeg);
+
+      // Set CSS rotation
+      const dur = 4200 + Math.floor(Math.random()*700); // 4.2–4.9s
+      canvas.style.setProperty("--dur", `${dur}ms`);
+      currentRotationDeg = (currentRotationDeg + targetRotation) % 3600; // keep in bounds
+      canvas.style.setProperty("--rot", `${currentRotationDeg}deg`);
+
+      // When animation ends, calculate and show result
+      setTimeout(() => {
+        spinning = false;
+
+        const prize = prizes[idx];
+        lastResult = {
+          prize,
+          winner: winnerInput.value.trim() || "(name not set)",
+          time: new Date()
+        };
+
+        resultValue.textContent = prize;
+        resultMeta.textContent = `Winner: ${lastResult.winner} • ${lastResult.time.toLocaleString()}`;
+
+        copyBtn.disabled = false;
+        lockSpin(15);
+        showToast("Result set. Copy it and log it.");
+      }, dur + 60);
+    });
+
+    copyBtn.addEventListener("click", async () => {
+      if (!lastResult) return;
+      const line = `${lastResult.time.toLocaleString()} | ${lastResult.winner} | ${lastResult.prize}`;
+      try{
+        await navigator.clipboard.writeText(line);
+        showToast("Copied!");
+      }catch(e){
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = line;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        showToast("Copied!");
+      }
+    });
+  </script>
+</body>
+</html>

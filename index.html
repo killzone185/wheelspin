@@ -531,19 +531,16 @@ function autoLogToSheet({ winner, prize }) {
         spinning = false;
 
         const prize = prizes[idx];
-        lastResult = {
+          lastResult = {
           prize,
           winner: winnerInput.value.trim() || "(name not set)",
           time: new Date()
         };
 
-        lastResult = {
-  prize,
-  winner: winnerInput.value.trim() || "(name not set)",
-  time: new Date()
-};
-
-autoLogToSheet({ winner: lastResult.winner, prize: lastResult.prize });
+        autoLogToSheet({ 
+          winner: lastResult.winner, 
+          prize: lastResult.prize 
+        });
 
         resultValue.textContent = prize;
         resultMeta.textContent = `Winner: ${lastResult.winner} • ${lastResult.time.toLocaleString()}`;

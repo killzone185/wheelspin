@@ -483,15 +483,27 @@
     }
     const LOG_URL = "https://script.google.com/macros/s/AKfycbz0zDrP3IWink1G908X-GlIsEIcVB4OfzHsdnMNoqrWb9vF-bQFuBAjdo4xweUXzZz5vw/exec"; // <-- paste your Apps Script web app URL here
 
+// Keep beacons alive so the browser doesn't cancel them
+const __beacons = [];
+
 function autoLogToSheet({ winner, prize }) {
   const params = new URLSearchParams({
     winner: winner || "Unknown",
     prize: prize || "Unknown",
-    source: "Wheel"
+    source: "Wheel",
+    // cache-buster so it never gets cached
+    t: Date.now().toString()
   });
 
-  // Beacon request (GET). Much more reliable than fetch in embeds.
   const img = new Image();
+  __beacons.push(img);
+
+  img.onload = img.onerror = () => {
+    // cleanup old beacons
+    const i = __beacons.indexOf(img);
+    if (i !== -1) __beacons.splice(i, 1);
+  };
+
   img.src = `${LOG_URL}?${params.toString()}`;
 }
 
